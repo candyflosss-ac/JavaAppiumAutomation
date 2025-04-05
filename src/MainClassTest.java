@@ -1,15 +1,16 @@
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MainClassTest extends MainClass{
+public class MainClassTest {
 
     @Test
     public void testGetLocalNumber () {
+        MainClass mainClass = new MainClass();
         int expectedValue = 14;
-        int actualValue = this.getLocalNumber();
+        int actualValue = mainClass.getLocalNumber();
         System.out.println("testGetLocalNumber: actual value is " + actualValue);
 
-        Assert.assertTrue(String.format("Expected value of the getLocalNumber is %s, actual value: %s", expectedValue, actualValue), actualValue == expectedValue);
+        Assert.assertEquals("Expected value of the getLocalNumber is incorrect", expectedValue, actualValue);
 
     }
 
