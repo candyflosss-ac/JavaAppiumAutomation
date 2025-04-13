@@ -3,8 +3,8 @@ import io.appium.java_client.android.options.UiAutomator2Options;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.MutableCapabilities;
 
+import java.net.URI;
 import java.net.URL;
 
 public class FirstTest {
@@ -24,7 +24,8 @@ public class FirstTest {
                 .setAppActivity(".main.MainActivity")
                 .setApp(System.getProperty("user.dir") + "/apks/org.wikipedia.apk");
 
-        driver = new AndroidDriver(new URL("http://127.0.0.1:4723"), options);
+        URL serverURL = URI.create("http://127.0.0.1:4723").toURL();
+        driver = new AndroidDriver(serverURL, options);
 
 //        //v1 - works
 //        MutableCapabilities options = new MutableCapabilities();
