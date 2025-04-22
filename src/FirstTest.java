@@ -171,6 +171,31 @@ public class FirstTest {
 
     }
 
+    @Test
+    public void testSearchInputHasExpectedTextOnMainPage() {
+        By locatorSearchOnMainPage = By.xpath("//androidx.cardview.widget.CardView[@resource-id='org.wikipedia:id/search_container']//android.widget.TextView");
+        assertElementHasText(
+                locatorSearchOnMainPage,
+                "Search Wikipedia",
+                "Search input on the main page does not have expected text");
+    }
+
+    @Test
+    public void testSearchInputHasExpectedText() {
+        By locatorSearchOnMainPage = By.id("org.wikipedia:id/search_container");
+        waitForElementAndClick(
+                locatorSearchOnMainPage,
+                "Cannot find 'Search Wikipedia' input",
+                5
+        );
+
+        By locatorSearch = By.id("org.wikipedia:id/search_src_text");
+        assertElementHasText(
+                locatorSearch,
+                "Search Wikipedia",
+                "Search input does not have expected text");
+    }
+
     private void skipOnboardingScreenIfPresented() {
         try {
             WebElement btnSkip = driver.findElement(By.id("org.wikipedia:id/fragment_onboarding_skip_button"));
@@ -212,6 +237,12 @@ public class FirstTest {
         WebElement element = waitForElementPresent(by, errorMessage, timeoutInSeconds);
         element.clear();
         return element;
+    }
+
+    private void assertElementHasText(By by, String expectedText, String errorMessage) {
+        WebElement element = waitForElementPresent(by, "Cannot find element to check text: '" + by + "'");
+        String actualText = element.getText();
+        Assert.assertEquals(errorMessage, expectedText, actualText);
     }
 
 }
