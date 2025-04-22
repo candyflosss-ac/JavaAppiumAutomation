@@ -32,6 +32,7 @@ public class FirstTest {
         URL serverURL = URI.create("http://127.0.0.1:4723").toURL();
         driver = new AndroidDriver(serverURL, options);
 
+        skipOnboardingScreenIfPresented();
     }
 
     @After
@@ -43,8 +44,6 @@ public class FirstTest {
 
     @Test
     public void firstTest() {
-        skipOnboardingScreenIfPresented();
-
         waitForElementAndClick(
                 By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
                 "Cannot find 'Search Wikipedia' input",
@@ -67,8 +66,6 @@ public class FirstTest {
 
     @Test
     public void testCancelSearch() {
-        skipOnboardingScreenIfPresented();
-
         waitForElementAndClick(
                 By.id("org.wikipedia:id/search_container"),
                 "Cannot find 'Search Wikipedia' input",
@@ -103,8 +100,6 @@ public class FirstTest {
 
     @Test
     public void testCancelSearchWithBtnX() {
-        skipOnboardingScreenIfPresented();
-
         waitForElementAndClick(
                 By.id("org.wikipedia:id/search_container"),
                 "Cannot find 'Search Wikipedia' input",
@@ -147,8 +142,6 @@ public class FirstTest {
 
     @Test
     public void testCompareArticleTitle() {
-        skipOnboardingScreenIfPresented();
-
         waitForElementAndClick(
                 By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
                 "Cannot find 'Search Wikipedia' input",
@@ -179,10 +172,12 @@ public class FirstTest {
     }
 
     private void skipOnboardingScreenIfPresented() {
-        WebElement btnSkip = driver.findElement(By.id("org.wikipedia:id/fragment_onboarding_skip_button"));
-        if (btnSkip.isDisplayed()) {
-            btnSkip.click();
-        }
+        try {
+            WebElement btnSkip = driver.findElement(By.id("org.wikipedia:id/fragment_onboarding_skip_button"));
+            if (btnSkip.isDisplayed()) {
+                btnSkip.click();
+            }
+        } catch (Exception ignored) { }
     }
 
     private WebElement waitForElementPresent(By by, String errorMessage, long timeoutInSeconds) {
