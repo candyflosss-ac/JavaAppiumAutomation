@@ -196,6 +196,57 @@ public class FirstTest {
                 "Search input does not have expected text");
     }
 
+    @Test
+    public void testSearchAndCancelResults() {
+        By locatorSearchOnMainPage = By.id("org.wikipedia:id/search_container");
+        waitForElementAndClick(
+                locatorSearchOnMainPage,
+                "Cannot find 'Search Wikipedia' input",
+                5
+        );
+
+        waitForElementAndSendKey(
+                By.id("org.wikipedia:id/search_src_text"),
+                "Appium",
+                "Cannot find search input",
+                5
+        );
+
+        By locatorSearchResult = By.id("org.wikipedia:id/page_list_item_title");
+        int countSearchResult = getAmountOfElements(locatorSearchResult);
+        Assert.assertTrue(
+                "Expected to find more then 1 search result, found " + countSearchResult,
+                countSearchResult > 1
+        );
+
+        /* The button X clears the search field. */
+        waitForElementAndClick(
+                By.id("org.wikipedia:id/search_close_btn"),
+                "Cannot find X to clear the search",
+                5
+        );
+
+        assertElementNotPresentedByAmount(
+                locatorSearchResult,
+                "Expected to find empty search result, found "
+        );
+
+        /* Check the same element(s) but with existent verification */
+        waitForElementNotPresent(
+                locatorSearchResult,
+                "Expected to find empty search result, found " +  locatorSearchResult,
+                5
+        );
+
+        /* Button X appears/displays only when some text is entered into the search field, Check that is not presented */
+        waitForElementNotPresent(
+                By.id("org.wikipedia:id/search_close_btn"),
+                "Button <- is still present on the page",
+                5
+        );
+
+    }
+
     private void skipOnboardingScreenIfPresented() {
         try {
             WebElement btnSkip = driver.findElement(By.id("org.wikipedia:id/fragment_onboarding_skip_button"));
@@ -244,5 +295,15 @@ public class FirstTest {
         String actualText = element.getText();
         Assert.assertEquals(errorMessage, expectedText, actualText);
     }
+
+    private int getAmountOfElements(By by) {
+        return driver.findElements(by).size();
+    }
+
+    private void assertElementNotPresentedByAmount(By by, String errorMessage) {
+        int amountOfElements = getAmountOfElements(by);
+        Assert.assertTrue(errorMessage + amountOfElements, amountOfElements == 0);
+    }
+
 
 }
