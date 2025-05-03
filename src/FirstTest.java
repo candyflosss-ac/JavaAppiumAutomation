@@ -5,13 +5,17 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.PointerInput;
+import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.URI;
 import java.net.URL;
 import java.time.Duration;
+import java.util.Arrays;
 
 public class FirstTest {
 
@@ -247,6 +251,145 @@ public class FirstTest {
 
     }
 
+    @Test
+    public void testSwipeArticle() {
+        waitForElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5);
+
+        String searchLine = "Appium";
+        waitForElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                searchLine,
+                "Cannot find search input",
+                5);
+
+        waitForElementAndClick(
+                By.xpath(String.format("//android.widget.TextView[@resource-id='org.wikipedia:id/page_list_item_title'][@text='%s']", searchLine)),
+                String.format("Cannot find page_list_item with title '%s'", searchLine),
+                5);
+
+        waitForElementPresent(
+                By.xpath("//android.widget.TextView[@text='" + searchLine + "']"),
+                "Cannot find article title " + searchLine,
+                15);
+
+        // Click somewhere to close msg 'customize your toolbar'-'got it' that cannot be found in elements
+        WebElement titleElement = waitForElementPresent(
+                By.xpath("//android.widget.TextView[@text='" + searchLine + "']"),
+                "Cannot find article title",
+                15);
+        titleElement.click();
+
+        swipeUpToFindElement(
+                By.xpath("//*[@text='View article in browser']"),
+                "Cannot find the end of the article",
+                20);
+    }
+
+    @Test
+    public void testSaveFirstArticleToMyList() {
+        waitForElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5);
+
+        String searchLine = "Java";
+        waitForElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                searchLine,
+                "Cannot find search input",
+                5);
+
+        String expectedDescription = "Object-oriented programming language";
+        String expectedArticleTitle = "Java (programming language)";
+
+        // Open article from the search list by description
+        waitForElementAndClick(
+                By.xpath("//*[@resource-id='org.wikipedia:id/page_list_item_description' and @text='"+ expectedDescription +"']"),
+                "Cannot find page list item with description '"+ expectedDescription +"'",
+                5);
+
+        // Check the title presented. Title does not have id, xpath was used
+        waitForElementPresent(
+                By.xpath("//android.widget.TextView[@text='" + expectedArticleTitle + "']"),
+                "Cannot find article title: " + expectedArticleTitle,
+                15);
+
+        // Click 'Save' in the footer
+        waitForElementAndClick(
+                By.id("org.wikipedia:id/page_save"),
+                "Cannot find button to save article",
+                5);
+
+        // Click 'Add to list' in the appeared message
+        waitForElementAndClick(
+                By.xpath("//android.widget.Button[@resource-id='org.wikipedia:id/snackbar_action'][@text='Add to list']"),
+                "Cannot find the element to add to the reading list",
+                5);
+
+        // Enter tne Name of the list
+        String nameOfList = "Learning programing";
+        waitForElementAndSendKey(
+                By.id("org.wikipedia:id/text_input"),
+                nameOfList,
+                "Cannot find input field to enter the Name of the list",
+                5);
+
+        // Press 'OK'
+        waitForElementAndClick(
+                By.xpath("//android.widget.Button[@text='OK']"),
+                "Cannot press the button 'OK' to save the article in the new list",
+                5);
+
+        // Return to the main page via the menu 'More options'
+        waitForElementAndClick(
+                By.xpath("//android.widget.ImageView[@content-desc='More options']"),
+                "Cannot open menu 'More options' in the right top corner",
+                5);
+
+        // Click menu item 'Explore' to return to the main page
+        waitForElementAndClick(
+                By.xpath("//android.widget.TextView[@resource-id='org.wikipedia:id/page_explore']"),
+                "Cannot click the menu item Explore",
+                5);
+
+        // Open list of the saved articles - Click 'Saved' in the footer
+        waitForElementAndClick(
+                By.xpath("//android.widget.FrameLayout[@content-desc='Saved']"),
+                "Cannot click on Saved on the bottom toolbar",
+                5);
+
+        // Open the list of the saved articles
+        waitForElementAndClick(
+                By.xpath(String.format("//android.widget.TextView[@resource-id='org.wikipedia:id/item_title' and @text='%s']", nameOfList)),
+                "Cannot open the folder: " + nameOfList,
+                5);
+
+        // Message may appear
+        closeMsgShareIfPresented();
+
+        String locatorSavedArticle = "//android.view.ViewGroup[@resource-id='org.wikipedia:id/page_list_item_container']/*[@text='" + expectedArticleTitle + "']";
+        // Check the article presented
+        waitForElementPresent(
+                By.xpath(locatorSavedArticle),
+                "Cannot find title in the list of saved articles: " + expectedArticleTitle,
+                15);
+
+        // Swipe element left to remove
+        swipeElementLeft(
+                By.xpath(locatorSavedArticle),
+                "left",
+                400);
+
+        // Check element not presented in the list
+        waitForElementNotPresent(
+                By.xpath(locatorSavedArticle),
+                "Cannot delete saved article, element displayed",
+                5);
+    }
+
     private void skipOnboardingScreenIfPresented() {
         try {
             WebElement btnSkip = driver.findElement(By.id("org.wikipedia:id/fragment_onboarding_skip_button"));
@@ -305,5 +448,115 @@ public class FirstTest {
         Assert.assertTrue(errorMessage + amountOfElements, amountOfElements == 0);
     }
 
+    private void closeMsgShareIfPresented() {
+        try {
+            WebElement msg = driver.findElement(By.xpath("//android.widget.TextView[@resource-id='org.wikipedia:id/textView'][@text='Share this reading list with others']"));
+            WebElement btn = driver.findElement(By.xpath("//android.widget.Button[@resource-id=\"org.wikipedia:id/buttonView\"][@text='Got it']"));
+
+            if (msg.isDisplayed()) {
+                btn.click();
+            }
+        } catch (Exception ignored) { }
+    }
+
+    protected void swipeUp(int timeOfSwipe) {
+        Dimension size = driver.manage().window().getSize();
+        int x = size.width / 2;
+        int yStart = (int) (size.height * 0.8);
+        int yEnd = (int) (size.height * 0.2);
+
+        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+        Sequence swipe = new Sequence(finger, 1);
+
+        swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), x, yStart));
+        swipe.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
+        swipe.addAction(finger.createPointerMove(Duration.ofMillis(timeOfSwipe), PointerInput.Origin.viewport(), x, yEnd));
+        swipe.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+        driver.perform(Arrays.asList(swipe));
+    }
+
+    protected void swipeUpQuick(){
+        swipeUp(200);
+    }
+
+    protected void swipeUpToFindElement(By by, String errorMessage, int maxSwipes) {
+        int alreadySwiped = 0;
+        while (driver.findElements(by).size() == 0) {
+            if (alreadySwiped > maxSwipes) {
+                waitForElementPresent(by, "Cannot find element by swiping \n" + errorMessage, 0);
+                return;
+            }
+            swipeUpQuick();
+            ++alreadySwiped;
+        }
+    }
+
+
+    protected void swipeElementLeft(By by, String errorMessage, int timeOfSwipe) {
+        WebElement element = waitForElementPresent(by, errorMessage, 10);
+
+        int xLeft = element.getLocation().getX();
+        int xRight = xLeft + element.getSize().getWidth();
+        int yUpper = element.getLocation().getY();
+        int yLower = yUpper + element.getSize().getHeight();
+        int yMiddle = (yUpper + yLower) / 2;
+
+        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+        Sequence swipe = new Sequence(finger, 1);
+
+        swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), xRight, yMiddle));
+        swipe.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
+        swipe.addAction(finger.createPointerMove(Duration.ofMillis(timeOfSwipe), PointerInput.Origin.viewport(), xLeft, yMiddle));
+        swipe.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+        driver.perform(Arrays.asList(swipe));
+
+//        // cannot make it works as expected
+//        HashMap<String, Object> params = new HashMap<>();
+//        params.put("direction", "left");
+//        params.put("top", xLeft);
+//        params.put("left", yUpper);
+//        params.put("width", xRight);
+//        params.put("height", yLower);
+//        params.put("percent", percent);
+//        params.put("speed", 500);
+//        driver.executeScript("mobile: swipeGesture", params);
+    }
+
+
+    protected void swipe(By by, String direction, int timeOfSwipeMillis) {
+        Dimension size = driver.manage().window().getSize();
+
+        int xStart = size.width / 2;
+        int yStart = size.height / 2;
+        int xEnd = xStart;
+        int yEnd = yStart;
+
+        switch (direction.toLowerCase()) {
+            case "up":
+                yEnd = (int) (size.height * 0.2);
+                break;
+            case "down":
+                yEnd = (int) (size.height * 0.8);
+                break;
+            case "left":
+                xEnd = (int) (size.width * 0.2);
+            case "right":
+                xEnd = (int) (size.width * 0.8);
+            default:
+                throw new IllegalArgumentException("Invalid swipe direction: " + direction);
+        }
+
+        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+        Sequence swipe = new Sequence(finger, 1);
+
+        swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), xStart, yStart));
+        swipe.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
+        swipe.addAction(finger.createPointerMove(Duration.ofMillis(timeOfSwipeMillis), PointerInput.Origin.viewport(), xEnd, yEnd));
+        swipe.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+        driver.perform(Arrays.asList(swipe));
+    }
 
 }
