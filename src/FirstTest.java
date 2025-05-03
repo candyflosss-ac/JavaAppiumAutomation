@@ -390,6 +390,66 @@ public class FirstTest {
                 5);
     }
 
+    @Test
+    public void testAmountOfNotEmptySearch() {
+        waitForElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5);
+
+        String searchLine = "Linkin Park discography";
+        waitForElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                searchLine,
+                "Cannot find search input",
+                5);
+
+        String locatorSearchResult = "//androidx.recyclerview.widget.RecyclerView[@resource-id='org.wikipedia:id/search_results_list']//*[@resource-id='org.wikipedia:id/page_list_item_title']";
+        waitForElementPresent(
+                By.xpath(locatorSearchResult),
+                "Cannot find anything by the request: " + searchLine,
+                15
+        );
+
+        int amountOfSearchResults = getAmountOfElements(By.xpath(locatorSearchResult));
+
+        Assert.assertTrue(
+                "We found too few results",
+                amountOfSearchResults > 0
+        );
+    }
+
+    @Test
+    public void testAmountOfEmptySearch() {
+        waitForElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5);
+
+        String searchLine = "qwertyuiooooooo";
+        waitForElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                searchLine,
+                "Cannot find search input",
+                5);
+
+        String locatorSearchResult = "//androidx.recyclerview.widget.RecyclerView[@resource-id='org.wikipedia:id/search_results_list']//*[@resource-id='org.wikipedia:id/page_list_item_title']";
+        String locatorEmptyResult = "//*[@text='No results']";
+
+        waitForElementPresent(
+                By.xpath(locatorEmptyResult),
+                "Cannot find empty result element by the request: " + searchLine,
+                15
+        );
+
+        assertElementNotPresent(
+                By.xpath(locatorSearchResult),
+                "Some results were found by the request: " + searchLine
+        );
+
+    }
+
+
     private void skipOnboardingScreenIfPresented() {
         try {
             WebElement btnSkip = driver.findElement(By.id("org.wikipedia:id/fragment_onboarding_skip_button"));
@@ -446,6 +506,14 @@ public class FirstTest {
     private void assertElementNotPresentedByAmount(By by, String errorMessage) {
         int amountOfElements = getAmountOfElements(by);
         Assert.assertTrue(errorMessage + amountOfElements, amountOfElements == 0);
+    }
+
+    private void assertElementNotPresent(By by, String errorMessage) {
+        int amountOfElements = getAmountOfElements(by);
+        if (amountOfElements > 0) {
+            String msgDefault = "An element '" + by.toString() + "' supposed to be not presented";
+            throw new AssertionError(msgDefault + " " + errorMessage);
+        }
     }
 
     private void closeMsgShareIfPresented() {
