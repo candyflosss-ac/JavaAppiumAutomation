@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.net.URL;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 
 public class FirstTest {
 
@@ -449,6 +451,136 @@ public class FirstTest {
 
     }
 
+    @Test
+    public void testSaveTwoArticlesToMyListAndRemoveOne() {
+        // The first article, search
+        waitForElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5);
+
+        String searchLine_FirstArticle = "Java";
+        waitForElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                searchLine_FirstArticle,
+                "Cannot find search input",
+                5);
+
+        String expectedDescription_FirstArticle = "Object-oriented programming language";
+        String expectedTitle_FirstArticle = "Java (programming language)";
+        // Open article from the search list by description
+        waitForElementAndClick(
+                By.xpath("//*[@resource-id='org.wikipedia:id/page_list_item_description' and @text='"+ expectedDescription_FirstArticle +"']"),
+                "Cannot find page list item with description '"+ expectedDescription_FirstArticle +"'",
+                5);
+
+        // Check the title presented. Title does not have id, xpath was used
+        waitForElementPresent(
+                By.xpath("//android.widget.TextView[@text='" + expectedTitle_FirstArticle + "']"),
+                "Cannot find article title: " + expectedTitle_FirstArticle,
+                15);
+
+        // Save the article
+        String nameOfList = "Ex5 Two articles";
+        saveArticleToList(nameOfList);
+
+        // Second article, search
+        waitForElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5);
+
+        String searchLine_SecondArticle = "Appium";
+        waitForElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                searchLine_SecondArticle,
+                "Cannot find search input",
+                5);
+
+        String expectedDescription_SecondArticle = "Automation for Apps";
+        String expectedTitle_SecondArticle = "Appium";
+        // Open article from the search list by description
+        waitForElementAndClick(
+                By.xpath("//*[@resource-id='org.wikipedia:id/page_list_item_description' and @text='"+ expectedDescription_SecondArticle +"']"),
+                "Cannot find page list item with description '"+ expectedDescription_SecondArticle +"'",
+                5);
+
+        // Check the title presented
+        waitForElementPresent(
+                By.xpath("//android.widget.TextView[@text='" + expectedTitle_SecondArticle + "']"),
+                "Cannot find article title: " + expectedTitle_SecondArticle,
+                15);
+
+        //Save the second article
+        saveArticleToList(nameOfList);
+        // Finish with the second article
+
+        // Return to the main page via the menu 'More options'
+        openExplorePage();
+
+        // Open list of the saved articles - Click 'Saved' in the footer
+        waitForElementAndClick(
+                By.xpath("//android.widget.FrameLayout[@content-desc='Saved']"),
+                "Cannot click on Saved on the bottom toolbar",
+                5);
+
+        // Open the list of the saved articles
+        waitForElementAndClick(
+                By.xpath(String.format("//android.widget.TextView[@resource-id='org.wikipedia:id/item_title' and @text='%s']", nameOfList)),
+                "Cannot open the folder: " + nameOfList,
+                5);
+
+        // Message may appear
+        closeMsgShareIfPresented();
+
+        // Check the 1st article presented
+        String locatorFirstSavedArticle = "//android.view.ViewGroup[@resource-id='org.wikipedia:id/page_list_item_container']/*[@text='" + expectedTitle_FirstArticle + "']";
+        waitForElementPresent(
+                By.xpath(locatorFirstSavedArticle),
+                "Cannot find title in the list of saved articles: " + expectedTitle_FirstArticle,
+                15);
+
+        // Check the 2nd article presented
+        String locatorSecondSavedArticle = "//android.view.ViewGroup[@resource-id='org.wikipedia:id/page_list_item_container']/*[@text='" + expectedTitle_SecondArticle + "']";
+        waitForElementPresent(
+                By.xpath(locatorSecondSavedArticle),
+                "Cannot find title in the list of saved articles: " + expectedTitle_SecondArticle,
+                15);
+
+        // Swipe 1st saved article left to remove
+        swipeElementLeft(
+                By.xpath(locatorFirstSavedArticle),
+                "left",
+                400);
+
+        // Check element not presented in the list
+        waitForElementNotPresent(
+                By.xpath(locatorFirstSavedArticle),
+                "Cannot delete saved article, element displayed",
+                5);
+
+        // Check the 2nd article presented
+        waitForElementPresent(
+                By.xpath(locatorSecondSavedArticle),
+                "Cannot find title in the list of saved articles: " + expectedTitle_SecondArticle,
+                15);
+
+        // Open the 2nd article
+        waitForElementAndClick(
+                By.xpath(locatorSecondSavedArticle),
+                "Cannot find the article in the list",
+                5
+        );
+
+        //Check the title in the opened article
+        String locatorArticleTitle = "//android.view.View[@resource-id='pcs']/android.view.View[1]/android.widget.TextView[@text='" + expectedTitle_SecondArticle + "']";
+        assertElementHasText(
+                By.xpath(locatorArticleTitle),
+                expectedTitle_SecondArticle,
+                "Search input does not have expected text: " + expectedTitle_SecondArticle
+        );
+    }
+
 
     private void skipOnboardingScreenIfPresented() {
         try {
@@ -494,7 +626,7 @@ public class FirstTest {
     }
 
     private void assertElementHasText(By by, String expectedText, String errorMessage) {
-        WebElement element = waitForElementPresent(by, "Cannot find element to check text: '" + by + "'");
+        WebElement element = waitForElementPresent(by, "Cannot find element to check text: '" + by + "'", 10);
         String actualText = element.getText();
         Assert.assertEquals(errorMessage, expectedText, actualText);
     }
@@ -525,6 +657,85 @@ public class FirstTest {
                 btn.click();
             }
         } catch (Exception ignored) { }
+    }
+
+    protected void saveArticleToList(String listName) {
+        // Click 'Save' in the footer
+        waitForElementAndClick(
+                By.id("org.wikipedia:id/page_save"),
+                "Cannot find button to save article",
+                5);
+
+        // Click 'Add to list' in the appeared message
+        waitForElementAndClick(
+                By.xpath("//android.widget.Button[@resource-id='org.wikipedia:id/snackbar_action'][@text='Add to list']"),
+                "Cannot find the element to add to the reading list",
+                5);
+
+        boolean listFound = false;
+        // First time to save
+        try {
+            // Enter tne Name of the list
+            waitForElementAndSendKey(
+                    By.id("org.wikipedia:id/text_input"),
+                    listName,
+                    "Cannot find input field to enter the Name of the list",
+                    5);
+
+            // Press 'OK'
+            waitForElementAndClick(
+                    By.xpath("//android.widget.Button[@text='OK']"),
+                    "Cannot press the button 'OK' to save the article in the new list",
+                    5);
+            listFound = true;
+
+        } catch (TimeoutException e) {
+            // The list already exists
+            String locatorListOfLists = "//androidx.recyclerview.widget.RecyclerView[@resource-id='org.wikipedia:id/list_of_lists']//*[@resource-id='org.wikipedia:id/item_title']";
+            List<WebElement> existingLists = driver.findElements(By.xpath(locatorListOfLists));
+
+            for (WebElement list : existingLists) {
+                if (list.getText().equalsIgnoreCase(listName)) {
+                    list.click();
+                    listFound = true;
+                    break;
+                }
+            }
+        }
+
+        // Create new if it was not found in the list
+        if (!listFound) {
+            waitForElementAndClick(
+                    By.xpath("//android.widget.LinearLayout[@resource-id='org.wikipedia:id/create_button']"),
+                    "Cannot found the element Create new",
+                    5);
+            // Enter tne Name of the list
+            waitForElementAndSendKey(
+                    By.id("org.wikipedia:id/text_input"),
+                    listName,
+                    "Cannot find input field to enter the Name of the list",
+                    5);
+            // Press 'OK'
+            waitForElementAndClick(
+                    By.xpath("//android.widget.Button[@text='OK']"),
+                    "Cannot press the button 'OK' to save the article in the new list",
+                    5);
+        }
+    }
+
+    protected void openExplorePage() {
+        // Return to the main page via the menu 'More options'
+        waitForElementAndClick(
+                By.xpath("//android.widget.ImageView[@content-desc='More options']"),
+                "Cannot open menu 'More options' in the right top corner",
+                5);
+
+        // Click menu item 'Explore' to return to the main page
+        waitForElementAndClick(
+                By.xpath("//android.widget.TextView[@resource-id='org.wikipedia:id/page_explore']"),
+                "Cannot click the menu item Explore",
+                5);
+
     }
 
     protected void swipeUp(int timeOfSwipe) {
