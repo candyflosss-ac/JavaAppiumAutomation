@@ -581,6 +581,34 @@ public class FirstTest {
         );
     }
 
+    @Test
+    public void testArticleHasTitle() {
+        waitForElementAndClick(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                "Cannot find 'Search Wikipedia' input",
+                5);
+
+        String searchLine = "Muse discography";
+        waitForElementAndSendKey(
+                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
+                searchLine,
+                "Cannot find search input",
+                5);
+
+        waitForElementAndClick(
+                By.xpath("//android.widget.TextView[@resource-id='org.wikipedia:id/page_list_item_title' and @text='Muse discography']"),
+                "Cannot find the article in search results list by search  line: '"+ searchLine +"'",
+                5);
+
+        // Click somewhere to close msg 'Customize your toolbar'-'got it' that cannot be found in elements,
+        // Otherwise, article elements are not available
+        waitForElementAndClick(By.id("org.wikipedia:id/page_web_view"),"",5);
+
+        String locatorArticleTitle = "//android.view.View[@resource-id='pcs']/android.view.View[1]/android.widget.TextView";
+        assertElementPresent(
+                By.xpath(locatorArticleTitle),
+                "Cannot get an element by locator.");
+    }
 
     private void skipOnboardingScreenIfPresented() {
         try {
@@ -644,6 +672,14 @@ public class FirstTest {
         int amountOfElements = getAmountOfElements(by);
         if (amountOfElements > 0) {
             String msgDefault = "An element '" + by.toString() + "' supposed to be not presented";
+            throw new AssertionError(msgDefault + " " + errorMessage);
+        }
+    }
+
+    private void assertElementPresent(By by, String errorMessage) {
+        int amountOfElements = getAmountOfElements(by);
+        if (amountOfElements == 0) {
+            String msgDefault = "Element not found: " + by.toString();
             throw new AssertionError(msgDefault + " " + errorMessage);
         }
     }
@@ -804,7 +840,7 @@ public class FirstTest {
     }
 
 
-    protected void swipe(By by, String direction, int timeOfSwipeMillis) {
+    protected void swipe(String direction, int timeOfSwipeMillis) {
         Dimension size = driver.manage().window().getSize();
 
         int xStart = size.width / 2;
