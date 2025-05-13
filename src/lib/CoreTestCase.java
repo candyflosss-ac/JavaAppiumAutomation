@@ -12,7 +12,7 @@ import java.net.URL;
 public class CoreTestCase extends TestCase {
 
     protected AndroidDriver driver;
-    private static String AppiumURL = "http://127.0.0.1:4723";
+    private static final String AppiumURL = "http://127.0.0.1:4723";
 
     @Override
     protected void setUp() throws Exception {
