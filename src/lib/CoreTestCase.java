@@ -15,7 +15,7 @@ public class CoreTestCase extends TestCase {
     private static String AppiumURL = "http://127.0.0.1:4723";
 
     @Override
-    public void setUp() throws Exception {
+    protected void setUp() throws Exception {
 
         super.setUp();
         UiAutomator2Options options = new UiAutomator2Options()
@@ -34,7 +34,7 @@ public class CoreTestCase extends TestCase {
     }
 
     @Override
-    public void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
         if (driver != null) {
             driver.quit();
 
