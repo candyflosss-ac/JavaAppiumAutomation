@@ -1,8 +1,5 @@
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.android.options.UiAutomator2Options;
-import org.junit.After;
+import lib.CoreTestCase;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -13,43 +10,14 @@ import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.net.URI;
-import java.net.URL;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
-public class FirstTest {
-
-    private AndroidDriver driver;
-
-    @Before
-    public void setUp() throws Exception {
-
-        UiAutomator2Options options = new UiAutomator2Options()
-                .setPlatformName("Android")
-                .setDeviceName("AndroidTestDevice")
-                .setPlatformVersion("15")
-                .setAutomationName("UiAutomator2")
-                .setAppPackage("org.wikipedia")
-                .setAppActivity(".main.MainActivity")
-                .setApp(System.getProperty("user.dir") + "/apks/org.wikipedia_50524.apk");
-
-        URL serverURL = URI.create("http://127.0.0.1:4723").toURL();
-        driver = new AndroidDriver(serverURL, options);
-
-        skipOnboardingScreenIfPresented();
-    }
-
-    @After
-    public void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
-    }
+public class FirstTest extends CoreTestCase {
 
     @Test
-    public void firstTest() {
+    public void testSearch() {
         waitForElementAndClick(
                 By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
                 "Cannot find 'Search Wikipedia' input",
@@ -608,15 +576,6 @@ public class FirstTest {
         assertElementPresent(
                 By.xpath(locatorArticleTitle),
                 "Cannot get an element by locator.");
-    }
-
-    private void skipOnboardingScreenIfPresented() {
-        try {
-            WebElement btnSkip = driver.findElement(By.id("org.wikipedia:id/fragment_onboarding_skip_button"));
-            if (btnSkip.isDisplayed()) {
-                btnSkip.click();
-            }
-        } catch (Exception ignored) { }
     }
 
     private WebElement waitForElementPresent(By by, String errorMessage, long timeoutInSeconds) {
