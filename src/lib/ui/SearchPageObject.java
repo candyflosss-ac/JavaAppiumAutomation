@@ -8,6 +8,7 @@ public class SearchPageObject extends MainPageObject {
     private static final String
             SEARCH_INIT_ELEMENT = "//*[contains(@text, 'Search Wikipedia')]",
             SEARCH_INPUT = "//*[contains(@text, 'Search Wikipedia')]",
+            SEARCH_CANCEL_BUTTON = "//android.widget.ImageButton[@content-desc='Navigate up']",
             SEARCH_RESULT_BY_SUBSTRING_TPL = "//*[@resource-id='org.wikipedia:id/page_list_item_description' and @text='{SUBSTRING}']";
 
     public SearchPageObject(AndroidDriver driver) {
@@ -22,6 +23,19 @@ public class SearchPageObject extends MainPageObject {
 
     public void initSearchInput() {
         this.waitForElementAndClick(By.xpath(SEARCH_INIT_ELEMENT), "Cannot find 'Search Wikipedia' input", 5);
+    }
+
+    public void waitForCancelButtonToAppear() {
+        // Button '<-' has xpath but doesn't have id
+        this.waitForElementPresent(By.xpath(SEARCH_CANCEL_BUTTON), "Cannot find <- to cancel the search and return to the main window", 5);
+    }
+
+    public void waitForCancelButtonToDisappear() {
+        this.waitForElementNotPresent(By.xpath(SEARCH_CANCEL_BUTTON), "Button <- is still present on the page", 5);
+    }
+
+    public void clickCancelSearch(){
+        this.waitForElementAndClick(By.xpath(SEARCH_CANCEL_BUTTON), "Cannot click <- to cancel the search button", 5);
     }
 
     public void typeSearchLine(String searchLine) {

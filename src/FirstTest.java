@@ -20,6 +20,7 @@ public class FirstTest extends CoreTestCase {
     @Test
     public void testSearch() {
         SearchPageObject spo = new SearchPageObject(driver);
+
         spo.initSearchInput();
         spo.typeSearchLine("Java");
         spo.waitForSearchResult("Object-oriented programming language");
@@ -27,36 +28,13 @@ public class FirstTest extends CoreTestCase {
 
     @Test
     public void testCancelSearch() {
-        MainPageObject.waitForElementAndClick(
-                By.id("org.wikipedia:id/search_container"),
-                "Cannot find 'Search Wikipedia' input",
-                5
-        );
+        SearchPageObject spo = new SearchPageObject(driver);
 
-        MainPageObject.waitForElementAndSendKey(
-                By.id("org.wikipedia:id/search_src_text"),
-                "Java",
-                "Cannot find search input",
-                5
-        );
-
-        MainPageObject.waitForElementAndClear(
-                By.id("org.wikipedia:id/search_src_text"),
-                "Cannot find search field",
-                5);
-
-        /* Button '<-' has xpath but doesn't have id */
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//android.widget.ImageButton[@content-desc='Navigate up']"),
-                "Cannot find <- to cancel the search and return to the main window",
-                5
-        );
-
-        MainPageObject.waitForElementNotPresent(
-                By.xpath("//android.widget.ImageButton[@content-desc='Navigate up']"),
-                "Button <- is still present on the page",
-                5
-        );
+        spo.initSearchInput();
+        spo.typeSearchLine("Java");
+        spo.waitForCancelButtonToAppear();
+        spo.clickCancelSearch();
+        spo.waitForCancelButtonToDisappear();
     }
 
     @Test
