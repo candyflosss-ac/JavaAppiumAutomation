@@ -1,10 +1,8 @@
 import lib.CoreTestCase;
-import lib.ui.MainPageObject;
-import lib.ui.SearchPageObject;
+import lib.ui.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 
 public class FirstTest extends CoreTestCase {
@@ -51,33 +49,15 @@ public class FirstTest extends CoreTestCase {
 
     @Test
     public void testCompareArticleTitle() {
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
-                "Cannot find 'Search Wikipedia' input",
-                5
-        );
+        SearchPageObject spo = new SearchPageObject(driver);
+        spo.initSearchInput();
+        spo.typeSearchLine("Java");
+        spo.clickByArticleWithSubstring("Object-oriented programming language");
 
-        MainPageObject.waitForElementAndSendKey(
-                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
-                "Java",
-                "Cannot find search input",
-                5
-        );
+        ArticlePageObject apo = new ArticlePageObject(driver);
+        String actualArticleTitle = apo.getArticleTitle();
 
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//*[@resource-id='org.wikipedia:id/page_list_item_description' and @text='Object-oriented programming language']"),
-                "Cannot find page_list_item with description 'Object-oriented programming language'",
-                5);
-
-        /* Title does not have id, xpath was used */
-        WebElement titleElement = MainPageObject.waitForElementPresent(
-                By.xpath("//android.widget.TextView[@text='Java (programming language)']"),
-                "Cannot find article title",
-                15);
-        String actualArticleTitle = titleElement.getAttribute("text");
-
-        Assert.assertEquals("We see unexpected title","Java (programming language)",actualArticleTitle);
-
+        Assert.assertEquals("Unexpected title displayed","Java (programming language)",actualArticleTitle);
     }
 
     @Test
@@ -158,141 +138,41 @@ public class FirstTest extends CoreTestCase {
 
     @Test
     public void testSwipeArticle() {
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
-                "Cannot find 'Search Wikipedia' input",
-                5);
+        SearchPageObject spo = new SearchPageObject(driver);
 
-        String searchLine = "Appium";
-        MainPageObject.waitForElementAndSendKey(
-                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
-                searchLine,
-                "Cannot find search input",
-                5);
+        spo.initSearchInput();
+        spo.typeSearchLine("Appium");
+        spo.clickByArticleWithSubstring("Automation for Apps");
 
-        MainPageObject.waitForElementAndClick(
-                By.xpath(String.format("//android.widget.TextView[@resource-id='org.wikipedia:id/page_list_item_title'][@text='%s']", searchLine)),
-                String.format("Cannot find page_list_item with title '%s'", searchLine),
-                5);
-
-        MainPageObject.waitForElementPresent(
-                By.xpath("//android.widget.TextView[@text='" + searchLine + "']"),
-                "Cannot find article title " + searchLine,
-                15);
-
-        // Click somewhere to close msg 'customize your toolbar'-'got it' that cannot be found in elements
-        WebElement titleElement = MainPageObject.waitForElementPresent(
-                By.xpath("//android.widget.TextView[@text='" + searchLine + "']"),
-                "Cannot find article title",
-                15);
-        titleElement.click();
-
-        MainPageObject.swipeUpToFindElement(
-                By.xpath("//*[@text='View article in browser']"),
-                "Cannot find the end of the article",
-                20);
+        ArticlePageObject apo = new ArticlePageObject(driver);
+        apo.waitForTitleElement();
+        apo.swipeUpToFooter();
     }
 
     @Test
     public void testSaveFirstArticleToMyList() {
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
-                "Cannot find 'Search Wikipedia' input",
-                5);
-
         String searchLine = "Java";
-        MainPageObject.waitForElementAndSendKey(
-                By.xpath("//*[contains(@text, 'Search Wikipedia')]"),
-                searchLine,
-                "Cannot find search input",
-                5);
-
         String expectedDescription = "Object-oriented programming language";
-        String expectedArticleTitle = "Java (programming language)";
 
-        // Open article from the search list by description
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//*[@resource-id='org.wikipedia:id/page_list_item_description' and @text='"+ expectedDescription +"']"),
-                "Cannot find page list item with description '"+ expectedDescription +"'",
-                5);
+        SearchPageObject spo = new SearchPageObject(driver);
+        spo.initSearchInput();
+        spo.typeSearchLine(searchLine);
+        spo.clickByArticleWithSubstring(expectedDescription);
 
-        // Check the title presented. Title does not have id, xpath was used
-        MainPageObject.waitForElementPresent(
-                By.xpath("//android.widget.TextView[@text='" + expectedArticleTitle + "']"),
-                "Cannot find article title: " + expectedArticleTitle,
-                15);
-
-        // Click 'Save' in the footer
-        MainPageObject.waitForElementAndClick(
-                By.id("org.wikipedia:id/page_save"),
-                "Cannot find button to save article",
-                5);
-
-        // Click 'Add to list' in the appeared message
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//android.widget.Button[@resource-id='org.wikipedia:id/snackbar_action'][@text='Add to list']"),
-                "Cannot find the element to add to the reading list",
-                5);
-
-        // Enter tne Name of the list
+        ArticlePageObject apo = new ArticlePageObject(driver);
+        apo.waitForTitleElement();
+        String actualArticleTitle = apo.getArticleTitle();
         String nameOfList = "Learning programing";
-        MainPageObject.waitForElementAndSendKey(
-                By.id("org.wikipedia:id/text_input"),
-                nameOfList,
-                "Cannot find input field to enter the Name of the list",
-                5);
+        apo.addArticleToMyList(nameOfList);
+        apo.closeArticle();
 
-        // Press 'OK'
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//android.widget.Button[@text='OK']"),
-                "Cannot press the button 'OK' to save the article in the new list",
-                5);
+        NavigationUI nui = new NavigationUI(driver);
+        nui.clickSaved();
 
-        // Return to the main page via the menu 'More options'
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//android.widget.ImageView[@content-desc='More options']"),
-                "Cannot open menu 'More options' in the right top corner",
-                5);
+        MyListsPageOpject mlpo = new MyListsPageOpject(driver);
+        mlpo.openFolderByName(nameOfList);
 
-        // Click menu item 'Explore' to return to the main page
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//android.widget.TextView[@resource-id='org.wikipedia:id/page_explore']"),
-                "Cannot click the menu item Explore",
-                5);
-
-        // Open list of the saved articles - Click 'Saved' in the footer
-        MainPageObject.waitForElementAndClick(
-                By.xpath("//android.widget.FrameLayout[@content-desc='Saved']"),
-                "Cannot click on Saved on the bottom toolbar",
-                5);
-
-        // Open the list of the saved articles
-        MainPageObject.waitForElementAndClick(
-                By.xpath(String.format("//android.widget.TextView[@resource-id='org.wikipedia:id/item_title' and @text='%s']", nameOfList)),
-                "Cannot open the folder: " + nameOfList,
-                5);
-
-        // Message may appear
-        MainPageObject.closeMsgShareIfPresented();
-
-        String locatorSavedArticle = "//android.view.ViewGroup[@resource-id='org.wikipedia:id/page_list_item_container']/*[@text='" + expectedArticleTitle + "']";
-        // Check the article presented
-        MainPageObject.waitForElementPresent(
-                By.xpath(locatorSavedArticle),
-                "Cannot find title in the list of saved articles: " + expectedArticleTitle,
-                15);
-
-        // Swipe element left to remove
-        MainPageObject.swipeElementLeft(
-                By.xpath(locatorSavedArticle),
-                "left",
-                400);
-
-        // Check element not presented in the list
-        MainPageObject.waitForElementNotPresent(
-                By.xpath(locatorSavedArticle),
-                "Cannot delete saved article, element displayed",
-                5);
+        mlpo.swipeByArticleToDelete(actualArticleTitle);
     }
 
     @Test
